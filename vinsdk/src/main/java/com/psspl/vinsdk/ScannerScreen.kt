@@ -46,11 +46,12 @@ import java.util.concurrent.Executors
 
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import java.util.Date
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 object VINValidator {
     fun isValidStructure(vin: String): Boolean {
-        return vin.matches(Regex("^[A-HJ-NPR-Z0-9]{17}$"))
+        return vin.matches(Regex(Constants.REGEX_VIN_STRUCTURE))
     }
 
     fun validateChecksum(vin: String): Boolean {
@@ -72,12 +73,20 @@ object VINValidator {
         return vin[8] == expectedCheckChar
     }
     
+    fun cleanVin(vin: String): String {
+        return vin.trim().uppercase()
+            .replace(Constants.CHAR_STAR, "")
+            .replace(Constants.CHAR_O, Constants.CHAR_NUM_0)
+            .replace(Constants.CHAR_I, Constants.CHAR_NUM_1)
+            .replace(Constants.CHAR_Q, Constants.CHAR_NUM_0)
+            .replace(Constants.CHAR_SPACE, "")
+            .replace(Constants.CHAR_HYPHEN, "")
+            .replace(Constants.CHAR_UNDERSCORE, "")
+            .replace(Constants.CHAR_COLON, "")
+    }
+
     fun validate(vin: String, shouldVerifyChecksum: Boolean): Boolean {
-        val cleanedVin = vin.trim().uppercase()
-            .replace("*", "")
-            .replace("O", "0")
-            .replace("I", "1")
-            .replace("Q", "0")
+        val cleanedVin = cleanVin(vin)
         
         if (!isValidStructure(cleanedVin)) return false
         if (!shouldVerifyChecksum) return true
@@ -92,7 +101,7 @@ fun VINScannerCamera(
     modifier: Modifier = Modifier,
     isFlashlightOn: Boolean = false,
     shouldVerifyChecksum: Boolean = false,
-    onScanned: (String) -> Unit
+    onScanned: (VinResult) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -190,7 +199,7 @@ fun VINScannerCamera(
                                                 for (block in visionText.textBlocks) {
                                                     val blockBox = block.boundingBox
                                                     if (blockBox != null) {
-                                                        Log.d("ScannerScreen", "Found Block anywhere: ${block.text.replace("\n", " ")} at bounds: $blockBox")
+                                                        Log.d(Constants.LOG_TAG_SCANNER, "${Constants.LOG_BLOCK_FOUND} ${block.text.replace("\n", " ")} at bounds: $blockBox")
                                                     }
                                                     // Only scan if the text block intersects strongly within the scannerBox
                                                     if (blockBox != null) {
@@ -205,37 +214,41 @@ fun VINScannerCamera(
                                                             (intersection.width().toFloat() / blockBox.width() > 0.6f)
                                                         
                                                         if (isMostlyInside) {
-                                                            Log.d("ScannerScreen", "Block INSIDE scanner list: ${block.text.replace("\n", " ")}")
+                                                            Log.d(Constants.LOG_TAG_SCANNER, "${Constants.LOG_BLOCK_INSIDE} ${block.text.replace("\n", " ")}")
                                                             val rawText = block.text.uppercase()
-                                                                .replace("O", "0")
-                                                                .replace("I", "1")
-                                                                .replace("Q", "0")
-                                                                .replace(" ", "")
-                                                                .replace("-", "")
-                                                                .replace("_", "")
+                                                                .replace(Constants.CHAR_O, Constants.CHAR_NUM_0)
+                                                                .replace(Constants.CHAR_I, Constants.CHAR_NUM_1)
+                                                                .replace(Constants.CHAR_Q, Constants.CHAR_NUM_0)
+                                                                .replace(Constants.CHAR_SPACE, "")
+                                                                .replace(Constants.CHAR_HYPHEN, "")
+                                                                .replace(Constants.CHAR_UNDERSCORE, "")
+                                                                .replace(Constants.CHAR_COLON, "")
                                                             
                                                             if (rawText.length >= 6) {
                                                                 validBlocks.add(Pair(rawText, blockBox))
                                                             }
                                                         } else {
-                                                            Log.d("ScannerScreen", "Block OUTSIDE or intersecting weakly: ${block.text.replace("\n", " ")}")
+                                                            Log.d(Constants.LOG_TAG_SCANNER, "${Constants.LOG_BLOCK_OUTSIDE} ${block.text.replace("\n", " ")}")
                                                         }
                                                     }
                                                 }
                                                 
                                                 validBlocks.sortBy { it.second.top } // Top-to-bottom
 
+                                                var confidenceScore = 0.0f
                                                 var foundVin: String? = null
                                                 val verifyChecksum = shouldVerifyChecksumState.value
                                                 
                                                 for (block in validBlocks) {
                                                     var text = block.first
-                                                    if (text.length == 20 && (text.startsWith("VIN") || text.startsWith("V1N"))) text = text.substring(3)
-                                                    else if (text.length == 26 && text.startsWith("CHASSISN0")) text = text.substring(9)
-                                                    else if (text.length == 24 && text.startsWith("CHASSIS")) text = text.substring(7)
+                                                    // "VIN" prefix parsing (3-char "V1N" + 17-char number = 20 total) 
+                                                    if (text.length == 20 && (text.startsWith(Constants.PREFIX_VIN) || text.startsWith(Constants.PREFIX_V1N))) text = text.substring(3)
+                                                    else if (text.length == 26 && text.startsWith(Constants.PREFIX_CHASSIS_N0)) text = text.substring(9)
+                                                    else if (text.length == 24 && text.startsWith(Constants.PREFIX_CHASSIS)) text = text.substring(7)
                                                     
                                                     if (VINValidator.validate(text, verifyChecksum)) {
-                                                        foundVin = text
+                                                        foundVin = VINValidator.cleanVin(text)
+                                                        confidenceScore = if (VINValidator.validateChecksum(foundVin)) 0.99f else 0.85f
                                                         break
                                                     }
                                                 }
@@ -246,8 +259,9 @@ fun VINScannerCamera(
                                                             for (j in (i + 1) until validBlocks.size) {
                                                                 val merged = validBlocks[i].first + validBlocks[j].first
                                                                 if (merged.length == 17 && VINValidator.validate(merged, verifyChecksum)) {
-                                                                    foundVin = merged
-                                                                    return@twoLineCheck
+                                                                    foundVin = VINValidator.cleanVin(merged)
+                                                                    confidenceScore = if (VINValidator.validateChecksum(foundVin)) 0.90f else 0.75f
+                                                                    break
                                                                 }
                                                             }
                                                         }
@@ -255,15 +269,20 @@ fun VINScannerCamera(
                                                 }
                                                 
                                                 if (foundVin != null) {
-                                                    Log.d("ScannerScreen", "✅ Valid matched VIN: $foundVin")
+                                                    Log.d(Constants.LOG_TAG_SCANNER, "${Constants.LOG_VALID_VIN} $foundVin")
                                                     if (hasMatched.compareAndSet(false, true)) {
-                                                        onScanned(foundVin!!)
+                                                        val result = VinResult(
+                                                            vin = foundVin,
+                                                            confidence = confidenceScore,
+                                                            timestamp = Date()
+                                                        )
+                                                        onScanned(result)
                                                     }
                                                     return@addOnSuccessListener
                                                 }
                                             }
                                             .addOnFailureListener { e ->
-                                                Log.e("ScannerScreen", "Text recognition failed", e)
+                                                Log.e(Constants.LOG_TAG_SCANNER, Constants.LOG_TEXT_RECOGNITION_FAILED, e)
                                             }
                                             .addOnCompleteListener {
                                                 imageProxy.close()
@@ -286,7 +305,7 @@ fun VINScannerCamera(
                             )
                             cameraControl = camera.cameraControl
                         } catch (exc: Exception) {
-                            Log.e("ScannerScreen", "Use case binding failed", exc)
+                            Log.e(Constants.LOG_TAG_SCANNER, Constants.LOG_BINDING_FAILED, exc)
                         }
                     }, ContextCompat.getMainExecutor(ctx))
 
@@ -302,7 +321,7 @@ fun VINScannerCamera(
         // Permission denied or loading
         Box(modifier = modifier.background(Color.Black), contentAlignment = Alignment.Center) {
             Text(
-                text = "Camera permission is required to use the scanner",
+                text = Constants.MSG_CAMERA_PERMISSION_REQUIRED,
                 color = Color.White,
                 modifier = Modifier.padding(32.dp)
             )
