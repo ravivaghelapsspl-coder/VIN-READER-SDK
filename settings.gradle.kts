@@ -25,5 +25,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "VINSDKDemo"
 include(":app")
-// include(":vinsdk")
+include(":vinsdk")
  

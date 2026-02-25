@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.ravivaghelapsspl-coder"
-version = "1.0.2"
+version = "1.0.3"
 
 android {
     namespace = "com.psspl.vinsdk"
@@ -72,7 +72,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.ravivaghelapsspl-coder"
                 artifactId = "vinsdk"
-                version = "1.0.2"
+                version = "1.0.3"
             }
         }
     }
