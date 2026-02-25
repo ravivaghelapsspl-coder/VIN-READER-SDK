@@ -192,19 +192,33 @@ fun VINScannerCamera(
                                                     if (blockBox != null) {
                                                         Log.d("ScannerScreen", "Found Block anywhere: ${block.text.replace("\n", " ")} at bounds: $blockBox")
                                                     }
-                                                    // Only scan if the text block completely fits within the scannerBox
-                                                    if (blockBox != null && scannerBox.contains(blockBox)) {
-                                                        Log.d("ScannerScreen", "Block INSIDE scanner list: ${block.text.replace("\n", " ")}")
-                                                        val rawText = block.text.uppercase()
-                                                            .replace("O", "0")
-                                                            .replace("I", "1")
-                                                            .replace("Q", "0")
-                                                            .replace(" ", "")
-                                                            .replace("-", "")
-                                                            .replace("_", "")
+                                                    // Only scan if the text block intersects strongly within the scannerBox
+                                                    if (blockBox != null) {
+                                                        // Ensure the block's vertical height is significantly inside the 12% optical bracket.
+                                                        // Often blockBoxes might bleed slightly depending on ML Kit's framing
+                                                        val intersection = android.graphics.Rect(blockBox)
+                                                        val doesIntersect = intersection.intersect(scannerBox)
                                                         
-                                                        if (rawText.length >= 6) {
-                                                            validBlocks.add(Pair(rawText, blockBox))
+                                                        // Require at least 60% of the recognized text's height and width to be inside the box
+                                                        val isMostlyInside = doesIntersect &&
+                                                            (intersection.height().toFloat() / blockBox.height() > 0.6f) &&
+                                                            (intersection.width().toFloat() / blockBox.width() > 0.6f)
+                                                        
+                                                        if (isMostlyInside) {
+                                                            Log.d("ScannerScreen", "Block INSIDE scanner list: ${block.text.replace("\n", " ")}")
+                                                            val rawText = block.text.uppercase()
+                                                                .replace("O", "0")
+                                                                .replace("I", "1")
+                                                                .replace("Q", "0")
+                                                                .replace(" ", "")
+                                                                .replace("-", "")
+                                                                .replace("_", "")
+                                                            
+                                                            if (rawText.length >= 6) {
+                                                                validBlocks.add(Pair(rawText, blockBox))
+                                                            }
+                                                        } else {
+                                                            Log.d("ScannerScreen", "Block OUTSIDE or intersecting weakly: ${block.text.replace("\n", " ")}")
                                                         }
                                                     }
                                                 }

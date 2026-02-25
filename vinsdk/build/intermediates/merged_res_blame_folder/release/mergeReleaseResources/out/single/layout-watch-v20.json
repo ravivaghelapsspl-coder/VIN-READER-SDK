@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.psspl.vinsdk-release-54:/layout-watch-v20/abc_alert_dialog_title_material.xml",
+        "source": "com.psspl.vinsdk-appcompat-1.6.1-44:/layout-watch-v20/abc_alert_dialog_title_material.xml"
+    },
+    {
+        "merged": "com.psspl.vinsdk-release-54:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml",
+        "source": "com.psspl.vinsdk-appcompat-1.6.1-44:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
+    }
+]
