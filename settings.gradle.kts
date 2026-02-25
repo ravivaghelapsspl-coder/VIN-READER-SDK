@@ -19,10 +19,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
 rootProject.name = "VINSDKDemo"
 include(":app")
-include(":vinsdk")
+// include(":vinsdk")
  
