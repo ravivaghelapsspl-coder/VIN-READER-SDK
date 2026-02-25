@@ -1,7 +1,11 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    id("maven-publish")
 }
+
+group = "com.github.ravivaghelapsspl-coder"
+version = "1.0.0"
 
 android {
     namespace = "com.psspl.vinsdk"
@@ -55,4 +59,17 @@ dependencies {
 
     // ML Kit Text Recognition v2
     implementation("com.google.mlkit:text-recognition:16.0.1")
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.ravivaghelapsspl-coder"
+                artifactId = "vinsdk"
+                version = "1.0.0"
+            }
+        }
+    }
 }
