@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +59,7 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu",
+                        contentDescription = AppConstants.DESC_MENU,
                         tint = Color.White
                     )
                 }
@@ -71,23 +73,23 @@ fun HomeScreen(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = Color(0xFF00AEEF), fontWeight = FontWeight.Bold, fontSize = 40.sp)) {
-                            append("tru")
+                            append(AppConstants.TXT_TRU)
                         }
                         withStyle(style = SpanStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 40.sp)) {
-                            append("tire")
+                            append(AppConstants.TXT_TIRE)
                         }
                     }
                 )
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = Color.Gray, fontSize = 14.sp)) {
-                            append("powered by ")
+                            append(AppConstants.TXT_POWERED_BY)
                         }
                         withStyle(style = SpanStyle(color = Color(0xFF00AEEF), fontWeight = FontWeight.Bold, fontSize = 14.sp)) {
-                            append("tru")
+                            append(AppConstants.TXT_TRU)
                         }
                         withStyle(style = SpanStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)) {
-                            append("video")
+                            append(AppConstants.TXT_VIDEO)
                         }
                     }
                 )
@@ -107,7 +109,7 @@ fun HomeScreen(
 
             // Enter Vehicle Information Section
             Text(
-                text = "Enter Vehicle Information",
+                text = AppConstants.TXT_ENTER_VEHICLE_INFO,
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
@@ -136,7 +138,7 @@ fun HomeScreen(
                         TextField(
                             value = vinNumber,
                             onValueChange = onVinNumberChange,
-                            placeholder = { Text("VIN #", color = Color.LightGray) },
+                            placeholder = { Text(AppConstants.TXT_VIN_PLACEHOLDER, color = Color.LightGray) },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
@@ -152,7 +154,7 @@ fun HomeScreen(
                         IconButton(onClick = onScanVIN) {
                             Icon(
                                 imageVector = Icons.Default.CameraAlt,
-                                contentDescription = "Scan VIN",
+                                contentDescription = AppConstants.DESC_SCAN_VIN,
                                 tint = Color(0xFF00AEEF)
                             )
                         }
@@ -162,25 +164,53 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Start Scan Button
-            Button(
-                onClick = { /* Start Scan Action */ },
+            val context = LocalContext.current
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 32.dp)
-                    .width(200.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (vinNumber.isNotEmpty()) Color(0xFF00AEEF) else Color.Gray,
-                    contentColor = if (vinNumber.isNotEmpty()) Color.White else Color.LightGray
-                )
             ) {
-                Text(
-                    text = "Start Scan",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                // Start Scan Button
+                Button(
+                    onClick = { onScanVIN() },
+                    modifier = Modifier
+                        .width(280.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00AEEF),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Scan VIN (Compose Demo)",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { context.startActivity(Intent(context, XmlDemoActivity::class.java)) },
+                    modifier = Modifier
+                        .width(280.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color(0xFF00AEEF)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF00AEEF))
+                ) {
+                    Text(
+                        text = "Test XML Activity Demo",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
