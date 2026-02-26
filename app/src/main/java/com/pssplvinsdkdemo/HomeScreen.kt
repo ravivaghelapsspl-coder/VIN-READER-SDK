@@ -2,214 +2,253 @@ package com.pssplvinsdkdemo
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.*
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
     onScanVIN: () -> Unit,
-    vinNumber: String,
-    onVinNumberChange: (String) -> Unit
+    scanStatus: ScanStatus
 ) {
+    val bgColor = Color(0xFFF4F5F9)
+    val primaryBlue = Color(0xFF007AFF)
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(bgColor)
             .statusBarsPadding()
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { /* Menu */ },
-                    modifier = Modifier
-                        .background(Color(0xFF00AEEF), CircleShape)
-                        .size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = AppConstants.DESC_MENU,
-                        tint = Color.White
-                    )
-                }
-            }
-
-            // Logo Section
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = Color(0xFF00AEEF), fontWeight = FontWeight.Bold, fontSize = 40.sp)) {
-                            append(AppConstants.TXT_TRU)
-                        }
-                        withStyle(style = SpanStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 40.sp)) {
-                            append(AppConstants.TXT_TIRE)
-                        }
-                    }
-                )
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = Color.Gray, fontSize = 14.sp)) {
-                            append(AppConstants.TXT_POWERED_BY)
-                        }
-                        withStyle(style = SpanStyle(color = Color(0xFF00AEEF), fontWeight = FontWeight.Bold, fontSize = 14.sp)) {
-                            append(AppConstants.TXT_TRU)
-                        }
-                        withStyle(style = SpanStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)) {
-                            append(AppConstants.TXT_VIDEO)
-                        }
-                    }
-                )
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Car Outline
-            CarOutline(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(horizontal = 64.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Enter Vehicle Information Section
+            
             Text(
-                text = AppConstants.TXT_ENTER_VEHICLE_INFO,
-                color = Color.White,
+                text = "VIN Scanner",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Input fields container
+            
+            Spacer(modifier = Modifier.height(64.dp))
+            
+            // Scanner Icon Graphic
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .background(Color(0xFF2C2C2C), RoundedCornerShape(24.dp))
-                    .padding(16.dp)
+                    .size(120.dp)
+                    .background(Color(0xFFE2EAF8), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
-                    // VIN Row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextField(
-                            value = vinNumber,
-                            onValueChange = onVinNumberChange,
-                            placeholder = { Text(AppConstants.TXT_VIN_PLACEHOLDER, color = Color.LightGray) },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                cursorColor = Color(0xFF00AEEF),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = onScanVIN) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = AppConstants.DESC_SCAN_VIN,
-                                tint = Color(0xFF00AEEF)
-                            )
-                        }
-                    }
+                Canvas(modifier = Modifier.size(64.dp)) {
+                    val stroke = Stroke(width = 8f, cap = StrokeCap.Round)
+                    val color = primaryBlue
+                    val length = 16.dp.toPx()
+                    val corner = 8.dp.toPx()
+                    
+                    // Top Left
+                    drawPath(
+                        path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(0f, length)
+                            lineTo(0f, corner)
+                            quadraticTo(0f, 0f, corner, 0f)
+                            lineTo(length, 0f)
+                        },
+                        color = color,
+                        style = stroke
+                    )
+                    // Top Right
+                    drawPath(
+                        path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(size.width - length, 0f)
+                            lineTo(size.width - corner, 0f)
+                            quadraticTo(size.width, 0f, size.width, corner)
+                            lineTo(size.width, length)
+                        },
+                        color = color,
+                        style = stroke
+                    )
+                    // Bottom Left
+                    drawPath(
+                        path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(0f, size.height - length)
+                            lineTo(0f, size.height - corner)
+                            quadraticTo(0f, size.height, corner, size.height)
+                            lineTo(length, size.height)
+                        },
+                        color = color,
+                        style = stroke
+                    )
+                    // Bottom Right
+                    drawPath(
+                        path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(size.width, size.height - length)
+                            lineTo(size.width, size.height - corner)
+                            quadraticTo(size.width, size.height, size.width - corner, size.height)
+                            lineTo(size.width - length, size.height)
+                        },
+                        color = color,
+                        style = stroke
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            val context = LocalContext.current
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(
+                text = "Ready to Scan",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = "Align the vehicle identification number within the camera guide for automatic detection.",
+                fontSize = 15.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                lineHeight = 22.sp
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            Button(
+                onClick = onScanVIN,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 32.dp)
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = primaryBlue,
+                    contentColor = Color.White
+                )
             ) {
-                // Start Scan Button
-                Button(
-                    onClick = { onScanVIN() },
-                    modifier = Modifier
-                        .width(280.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00AEEF),
-                        contentColor = Color.White
-                    )
-                ) {
+                Icon(
+                    imageVector = Icons.Outlined.QrCodeScanner,
+                    contentDescription = "Scan Icon",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Start VIN Scan",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            
+            if (scanStatus !is ScanStatus.None) {
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Scan VIN (Compose Demo)",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "LAST SCAN RESULT",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray
                     )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { context.startActivity(Intent(context, XmlDemoActivity::class.java)) },
-                    modifier = Modifier
-                        .width(280.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color(0xFF00AEEF)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF00AEEF))
-                ) {
-                    Text(
-                        text = "Test XML Activity Demo",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            when (scanStatus) {
+                                is ScanStatus.Cancelled -> {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .background(Color(0xFFF38B2A), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Cancelled",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text(text = "Cancelled", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                                            Text(text = scanStatus.message, color = Color.Gray, fontSize = 14.sp)
+                                        }
+                                    }
+                                }
+                                is ScanStatus.Error -> {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .background(Color.Red, CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Error",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text(text = "Error", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                                            Text(text = scanStatus.message, color = Color.Gray, fontSize = 14.sp)
+                                        }
+                                    }
+                                }
+                                is ScanStatus.Success -> {
+                                    val result = scanStatus.result
+                                    val format = SimpleDateFormat("dd MMM yyyy 'at' h:mm a", Locale.getDefault())
+                                    val dateStr = format.format(result.timestamp)
+                                    val confStr = "${(result.confidence * 100).toInt()}.0%"
+                                    
+                                    ResultRow("VIN", result.vin, primaryBlue, isBoldValue = true)
+                                    HorizontalDivider(color = Color(0xFFF0F0F0))
+                                    ResultRow("Confidence", confStr, Color.Black)
+                                    HorizontalDivider(color = Color(0xFFF0F0F0))
+                                    ResultRow("Date", dateStr, Color.Black)
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -217,65 +256,20 @@ fun HomeScreen(
 }
 
 @Composable
-fun CarOutline(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val strokeWidth = 1.5.dp.toPx()
-        val color = Color.Gray
-
-        // Top-down car simple lines
-        val bodyRect = Rect(width * 0.3f, height * 0.1f, width * 0.7f, height * 0.9f)
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(bodyRect.left, bodyRect.top),
-            size = Size(bodyRect.width, bodyRect.height),
-            cornerRadius = CornerRadius(40f, 40f),
-            style = Stroke(strokeWidth)
-        )
-
-        // Wheels
-        val wheelWidth = width * 0.08f
-        val wheelHeight = height * 0.15f
-        listOf(
-            Offset(width * 0.18f, height * 0.2f),
-            Offset(width * 0.74f, height * 0.2f),
-            Offset(width * 0.18f, height * 0.65f),
-            Offset(width * 0.74f, height * 0.65f)
-        ).forEach { offset ->
-            drawRoundRect(
-                color = color,
-                topLeft = offset,
-                size = Size(wheelWidth, wheelHeight),
-                cornerRadius = CornerRadius(20f, 20f),
-                style = Stroke(strokeWidth)
-            )
-        }
-
-        // Front window
-        drawPath(
-            path = Path().apply {
-                moveTo(width * 0.35f, height * 0.25f)
-                lineTo(width * 0.65f, height * 0.25f)
-                lineTo(width * 0.62f, height * 0.4f)
-                lineTo(width * 0.38f, height * 0.4f)
-                close()
-            },
-            color = color,
-            style = Stroke(strokeWidth)
-        )
-
-        // Back window
-        drawPath(
-            path = Path().apply {
-                moveTo(width * 0.35f, height * 0.75f)
-                lineTo(width * 0.65f, height * 0.75f)
-                lineTo(width * 0.62f, height * 0.6f)
-                lineTo(width * 0.38f, height * 0.6f)
-                close()
-            },
-            color = color,
-            style = Stroke(strokeWidth)
+fun ResultRow(label: String, value: String, valueColor: Color, isBoldValue: Boolean = false) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = Color.Gray, fontSize = 15.sp)
+        Text(
+            text = value,
+            color = valueColor,
+            fontSize = 15.sp,
+            fontWeight = if (isBoldValue) FontWeight.SemiBold else FontWeight.Medium
         )
     }
 }

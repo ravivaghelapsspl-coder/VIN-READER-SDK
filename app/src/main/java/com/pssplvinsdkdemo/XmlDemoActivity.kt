@@ -42,6 +42,12 @@ class XmlDemoActivity : ComponentActivity() {
                         composeView.visibility = View.GONE
                         btnScan.visibility = View.VISIBLE
                         tvVinResult.visibility = View.VISIBLE
+                    },
+                    onError = { errorMsg ->
+                        tvVinResult.text = "Error: $errorMsg"
+                        composeView.visibility = View.GONE
+                        btnScan.visibility = View.VISIBLE
+                        tvVinResult.visibility = View.VISIBLE
                     }
                 )
             }

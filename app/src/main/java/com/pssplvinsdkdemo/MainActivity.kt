@@ -7,16 +7,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.pssplvinsdkdemo.ui.theme.VINSDKDemoTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.Box
+import com.psspl.vinsdk.VinResult
+
+sealed class ScanStatus {
+    object None : ScanStatus()
+    data class Success(val result: VinResult) : ScanStatus()
+    data class Cancelled(val message: String = "The scan was dismissed by the user.") : ScanStatus()
+    data class Error(val message: String) : ScanStatus()
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,30 +29,35 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             VINSDKDemoTheme {
-                var currentScreen by remember { mutableStateOf("home") }
-                var vinNumber by remember { mutableStateOf("") }
-                var scannerType by remember { mutableStateOf("") }
+                var currentScreen by remember { mutableStateOf(AppConstants.SCREEN_HOME) }
+                var scanStatus by remember { mutableStateOf<ScanStatus>(ScanStatus.None) }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                         when (currentScreen) {
-                            "home" -> {
+                            AppConstants.SCREEN_HOME -> {
                                 HomeScreen(
                                     onScanVIN = {
-                                        currentScreen = "scanner"
+                                        currentScreen = AppConstants.SCREEN_SCANNER
                                     },
-                                    vinNumber = vinNumber,
-                                    onVinNumberChange = { vinNumber = it.uppercase() }
+                                    scanStatus = scanStatus
                                 )
                             }
-                            "scanner" -> {
+                            AppConstants.SCREEN_SCANNER -> {
                                 ScannerScreen(
-                                    title = "Place the entire VIN inside the box",
+                                    title = AppConstants.TITLE_SCANNER,
                                     boxColor = androidx.compose.ui.graphics.Color(0xFF00AEEF),
-                                    onClose = { currentScreen = "home" },
+                                    onClose = { 
+                                        scanStatus = ScanStatus.Cancelled()
+                                        currentScreen = AppConstants.SCREEN_HOME 
+                                    },
                                     onScanned = { result ->
-                                        vinNumber = result
-                                        currentScreen = "home"
+                                        scanStatus = ScanStatus.Success(result)
+                                        currentScreen = AppConstants.SCREEN_HOME
+                                    },
+                                    onError = { errorMsg ->
+                                        scanStatus = ScanStatus.Error(errorMsg)
+                                        currentScreen = AppConstants.SCREEN_HOME
                                     }
                                 )
                             }

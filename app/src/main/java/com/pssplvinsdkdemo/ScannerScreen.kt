@@ -28,12 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.psspl.vinsdk.VINScannerCamera
 
+import com.psspl.vinsdk.VinResult
+
 @Composable
 fun ScannerScreen(
     title: String,
     boxColor: Color,
     onClose: () -> Unit,
-    onScanned: (String) -> Unit
+    onScanned: (VinResult) -> Unit,
+    onError: (String) -> Unit
 ) {
     var isFlashlightOn by remember { mutableStateOf(false) }
     var shouldVerifyChecksum by remember { mutableStateOf(false) }
@@ -44,9 +47,17 @@ fun ScannerScreen(
             modifier = Modifier.fillMaxSize(),
             isFlashlightOn = isFlashlightOn,
             shouldVerifyChecksum = shouldVerifyChecksum,
-            onScanned = {
+            onScanned = { result ->
                 isFlashlightOn = false
-                onScanned(it)
+                onScanned(result)
+            },
+            onCancel = {
+                isFlashlightOn = false
+                onClose()
+            },
+            onError = { error ->
+                isFlashlightOn = false
+                onError(error)
             }
         )
 
@@ -71,23 +82,7 @@ fun ScannerScreen(
             Spacer(modifier = Modifier.weight(0.6f))
         }
 
-        // Top Close Button
-        IconButton(
-            onClick = {
-                isFlashlightOn = false
-                onClose()
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 48.dp, end = 16.dp)
-                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = Color.White
-            )
-        }
+        // Close button handles by SDK
 
         // Bottom Buttons
         Row(
@@ -100,7 +95,7 @@ fun ScannerScreen(
 
         ) {
             // ISO Toggle
-           /* Row(
+            Row(
                 modifier = Modifier
                     .background(
                         if (shouldVerifyChecksum) Color.Green.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f),
@@ -111,7 +106,7 @@ fun ScannerScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "ISO 3779",
+                    text = AppConstants.TXT_ISO,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -122,7 +117,7 @@ fun ScannerScreen(
                         .size(24.dp)
                         .background(if (shouldVerifyChecksum) Color.Green else Color.White, CircleShape)
                 )
-            }*/
+            }
 
             // Flash Toggle
             Row(
@@ -137,13 +132,13 @@ fun ScannerScreen(
             ) {
                 Icon(
                     imageVector = if (isFlashlightOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                    contentDescription = "Flash Toggle",
+                    contentDescription = AppConstants.DESC_FLASH_TOGGLE,
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isFlashlightOn) "On" else "Off",
+                    text = if (isFlashlightOn) AppConstants.TXT_ON else AppConstants.TXT_OFF,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
