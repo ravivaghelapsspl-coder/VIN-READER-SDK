@@ -19,7 +19,7 @@ dependencyResolutionManagement {
 Add the dependency to your module `build.gradle.kts`:
 ```kotlin
 dependencies {
-    implementation("com.github.ravivaghelapsspl-coder.VIN-READER-SDK:vinsdk:1.0.5")
+    implementation("com.github.ravivaghelapsspl-coder.VIN-READER-SDK:vinsdk:1.0.6")
 }
 ```
 
