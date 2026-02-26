@@ -1,4 +1,5 @@
 jdk:
-  - openjdk21
+  - openjdk11
+
 install:
-  - ./gradlew :vinsdk:publishToMavenLocal
+  - FILE=$(find vinsdk -maxdepth 1 -name "*.aar" | head -n 1); VERSION=$(basename $FILE | sed -E 's/.*-([0-9]+\.[0-9]+\.[0-9]+)\.aar/\1/'); mvn install:install-file -Dfile=$FILE -DgroupId=com.github.ravivaghelapsspl-coder -DartifactId=vinsdk -Dversion=$VERSION -Dpackaging=aar -DgeneratePom=true

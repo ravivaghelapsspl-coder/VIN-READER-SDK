@@ -1,0 +1,6 @@
+# Ignore everything in the vinsdk directory so the source code is not pushed
+*
+
+# Exceptions: Allow only the compiled AAR files and this gitignore file
+!*.aar
+!.gitignore
