@@ -10,7 +10,7 @@ activityCompose = "1.8.0"
 kotlin = "2.0.21"
 composeBom = "2024.09.00"
 textRecognition = "16.0.1"
-vinReaderSdk = "1.0.7"
+vinReaderSdk = "1.0.8"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraxVersion" }
