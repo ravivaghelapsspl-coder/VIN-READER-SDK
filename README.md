@@ -1,6 +1,6 @@
 # VIN-READER-SDK
 
-An isolated, lightweight Android Jetpack Compose SDK for optically scanning and validating Vehicle Identification Numbers (VINs) via ML Kit Text Recognition.
+An isolated, lightweight Android SDK for optically scanning and validating Vehicle Identification Numbers (VINs) via ML Kit Text Recognition with support for ISO 3779 checksum mathematics.
 
 ## Installation 
 
@@ -19,86 +19,80 @@ dependencyResolutionManagement {
 Add the dependency to your module `build.gradle.kts`:
 ```kotlin
 dependencies {
-    implementation("com.github.ravivaghelapsspl-coder.VIN-READER-SDK:vinsdk:1.0.6")
+    implementation("com.github.ravivaghelapsspl-coder.VIN-READER-SDK:vinsdk:1.0.8")
 }
 ```
 
-## Usage Example (Jetpack Compose)
+## API Documentation
 
-The SDK exposes `VINScannerCamera`, which strictly handles the camera rendering and ML Kit text recognition natively without injecting unexpected UI overlays. You simply layer your UI buttons over it using Compose!
+### [#](#vin-scanner-contract)VINScannerContract
+[#](#vin-scanner-contract)
+Represents the standard Android Activity Result Contract used to launch the scanner Activity and return the scanned result safely to your component.
+
+- `registerForActivityResult(VINScannerContract())`: this function registers the contract in your Activity and returns an ActivityResultLauncher.
 
 ```kotlin
-import com.psspl.vinsdk.VINScannerCamera
-
-@Composable
-fun ScannerDemoScreen() {
-    var isFlashlightOn by remember { mutableStateOf(false) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        
-        // The core, invisible scanning engine implementation
-        VINScannerCamera(
-            modifier = Modifier.fillMaxSize(),
-            isFlashlightOn = isFlashlightOn,
-            shouldVerifyChecksum = false, // Set to true to strictly enforce ISO 3779 checksum math!
-            onScanned = { result ->
-                // Automatically triggers when a valid structured VIN is found inside the frame
-                println("Found VIN: ${result.vin} with confidence: ${result.confidence}")
-            }
-        )
-
-        // Draw your own custom UI directly over it here!
-        Button(
-            onClick = { isFlashlightOn = !isFlashlightOn },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            Text(if (isFlashlightOn) "Turn Flash Off" else "Turn Flash On")
-        }
-    }
+registerForActivityResult(VINScannerContract()) { result: VINScannerCode? ->
+    // implementation
 }
 ```
 
-## Usage Example (XML Activity)
+### [#](#vin-scanner-configuration)VINScannerConfiguration
+[#](#vin-scanner-configuration)
+Represents the configuration class parameter used to customize the behavior and UI constraints of the SDK.
 
-If your project doesn't fully use Compose yet, you can still easily integrate the SDK by utilizing a `ComposeView` inside your XML layouts.
+- `iso3779Enabled`: Determines if strictly validating mathematical ISO 3779 Checksums is enabled by default. Default: `false`.
+- `flashMode`: Determines the default starting mode of the camera torch capability using `VINScannerFlashMode.ON` or `OFF`. Default: `VINScannerFlashMode.OFF`.
 
-**1. Create a placeholder in your XML file (e.g., `activity_scanner.xml`):**
-```xml
-<androidx.compose.ui.platform.ComposeView
-    android:id="@+id/composeView"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+```kotlin
+VINScannerConfiguration(
+    iso3779Enabled = false,
+    flashMode = VINScannerFlashMode.OFF
+)
 ```
 
-**2. Attach the scanner in your Kotlin Activity (`ScannerActivity.kt`):**
+### [#](#vin-scanner-code)VINScannerCode
+[#](#vin-scanner-code)
+Represents the result dataset emitted by the ML Kit text analyzer containing exactly 17 corrected characters.
+
+- `data`: retrieving the parsed 17-digit string representing the VIN.
+- `confidence`: retrieving the Float tracking the optical accuracy/checksum validity.
+
+## Usage Example
+
+Implementation of the complete pipeline within a ComponentActivity. 
+
 ```kotlin
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.platform.ComposeView
-import com.psspl.vinsdk.VINScannerCamera
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import com.psspl.vinsdk.*
 
-class ScannerActivity : AppCompatActivity() {
+class YourActivity: ComponentActivity() {
+    
+    private var scannerScreenLauncher: ActivityResultLauncher<VINScannerConfiguration>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_scanner)
-
-        val composeView = findViewById<ComposeView>(R.id.composeView)
         
-        composeView.setContent {
-            VINScannerCamera(
-                isFlashlightOn = false,
-                shouldVerifyChecksum = false,
-                onScanned = { result ->
-                    println("Scanned VIN: ${result.vin} | Accuracy: ${result.confidence}")
-                    // Handle the result or close the activity!
-                }
-            )
+        scannerScreenLauncher = registerForActivityResult(VINScannerContract()) { result: VINScannerCode? ->
+            if (result != null) {
+                println("Scanned VIN: ${result.data}")
+            } else {
+                println("Scan was dismissed")
+            }
         }
+        
+        // When a button is clicked... 
+        openScanner(scannerScreenLauncher)        
+    }
+
+    private fun openScanner(cameraScreen: ActivityResultLauncher<VINScannerConfiguration>?) {
+        val scannerConfiguration = VINScannerConfiguration(
+            iso3779Enabled = false,
+            flashMode = VINScannerFlashMode.OFF
+        )
+        cameraScreen?.launch(scannerConfiguration)
     }
 }
 ```
-
-## Features
-- **Clean Compose API:** Purely built in `androidx.compose`.
-- **UI Agnostic:** The SDK returns the data; you build the look.
-- **High Accuracy & ISO Parsing:** Supports built-in smart parsing, multi-line spanning (scanning multiple broken VIN blocks and verifying if combining them forms a logical checksum), and optional strict ISO 3779 Checksum verification.

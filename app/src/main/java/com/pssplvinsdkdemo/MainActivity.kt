@@ -14,7 +14,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.Box
+import androidx.activity.compose.rememberLauncherForActivityResult
 import com.psspl.vinsdk.VinResult
+import com.psspl.vinsdk.VINScannerContract
+import com.psspl.vinsdk.VINScannerConfiguration
 
 sealed class ScanStatus {
     object None : ScanStatus()
@@ -29,39 +32,26 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             VINSDKDemoTheme {
-                var currentScreen by remember { mutableStateOf(AppConstants.SCREEN_HOME) }
                 var scanStatus by remember { mutableStateOf<ScanStatus>(ScanStatus.None) }
+
+                val scannerScreenLauncher = rememberLauncherForActivityResult(
+                    contract = VINScannerContract()
+                ) { result ->
+                    scanStatus = if (result != null) {
+                        ScanStatus.Success(VinResult(result.data, result.confidence, java.util.Date()))
+                    } else {
+                        ScanStatus.Cancelled()
+                    }
+                }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                        when (currentScreen) {
-                            AppConstants.SCREEN_HOME -> {
-                                HomeScreen(
-                                    onScanVIN = {
-                                        currentScreen = AppConstants.SCREEN_SCANNER
-                                    },
-                                    scanStatus = scanStatus
-                                )
-                            }
-                            AppConstants.SCREEN_SCANNER -> {
-                                ScannerScreen(
-                                    title = AppConstants.TITLE_SCANNER,
-                                    boxColor = androidx.compose.ui.graphics.Color(0xFF00AEEF),
-                                    onClose = { 
-                                        scanStatus = ScanStatus.Cancelled()
-                                        currentScreen = AppConstants.SCREEN_HOME 
-                                    },
-                                    onScanned = { result ->
-                                        scanStatus = ScanStatus.Success(result)
-                                        currentScreen = AppConstants.SCREEN_HOME
-                                    },
-                                    onError = { errorMsg ->
-                                        scanStatus = ScanStatus.Error(errorMsg)
-                                        currentScreen = AppConstants.SCREEN_HOME
-                                    }
-                                )
-                            }
-                        }
+                        HomeScreen(
+                            onScanVIN = {
+                                scannerScreenLauncher.launch(VINScannerConfiguration())
+                            },
+                            scanStatus = scanStatus
+                        )
                     }
                 }
             }
