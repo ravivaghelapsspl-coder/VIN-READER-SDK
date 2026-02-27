@@ -23,7 +23,79 @@ dependencies {
 }
 ```
 
+## Camera Permission
+
+The SDK requires camera access to scan VIN codes. You must declare the permission in your app manifest **and** handle the runtime request for Android 6.0+ (API 23+).
+
+### 1. Add to `AndroidManifest.xml`
+
+```xml
+<uses-feature
+    android:name="android.hardware.camera"
+    android:required="false" />
+
+<uses-permission android:name="android.permission.CAMERA" />
+```
+
+> [!NOTE]
+> Setting `android:required="false"` ensures your app is still installable on devices without a back camera. The SDK will surface an error callback if no camera is found at runtime.
+
+### 2. Runtime Permission (Recommended)
+
+The SDK handles the runtime permission request internally when the scanner is launched. However, for a better user experience, it is recommended to check and request the permission **before** calling `openScanner()` so you can show a rationale dialog first.
+
+```kotlin
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
+class YourActivity : ComponentActivity() {
+
+    // Register the permission launcher before onCreate
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            openScanner(scannerScreenLauncher)
+        } else {
+            // Handle the case where the user denied the permission
+            Toast.makeText(this, "Camera permission is required to scan VINs.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun checkAndOpenScanner() {
+        when {
+            // Permission already granted — launch immediately
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED -> {
+                openScanner(scannerScreenLauncher)
+            }
+
+            // Show rationale if the user previously denied
+            shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
+                AlertDialog.Builder(this)
+                    .setTitle("Camera Required")
+                    .setMessage("Camera access is needed to scan the VIN barcode on your vehicle.")
+                    .setPositiveButton("Grant") { _, _ ->
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+
+            // First-time request
+            else -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+}
+```
+
+> [!IMPORTANT]
+> If the CAMERA permission is denied and the SDK launches anyway, the scanner screen will display a "Camera permission is required" message with a Cancel button. The `onError` callback **is not** invoked on permission denial — the user must manually dismiss using `onCancel`.
+
 ## API Documentation
+
 
 ### [#](#vin-scanner-contract)VINScannerContract
 [#](#vin-scanner-contract)

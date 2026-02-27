@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.ravivaghelapsspl-coder:VIN-READER-SDK:1.0.8")
+    implementation("com.github.ravivaghelapsspl-coder:VIN-READER-SDK:1.0.9")
     //implementation(project(":vinsdk"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
