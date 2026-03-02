@@ -25,7 +25,11 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     onScanVIN: () -> Unit,
-    scanStatus: ScanStatus
+    scanStatus: ScanStatus,
+    verifyChecksum: Boolean,
+    onVerifyChecksumChange: (Boolean) -> Unit,
+    flashEnabled: Boolean,
+    onFlashEnabledChange: (Boolean) -> Unit
 ) {
     val bgColor = Color(0xFFF4F5F9)
     val primaryBlue = Color(0xFF007AFF)
@@ -42,7 +46,7 @@ fun HomeScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(25.dp))
             
             Text(
                 text = "VIN Scanner",
@@ -51,7 +55,7 @@ fun HomeScreen(
                 color = Color.Black
             )
             
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(25.dp))
             
             // Scanner Icon Graphic
             Box(
@@ -133,8 +137,79 @@ fun HomeScreen(
                 lineHeight = 22.sp
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
-            
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Configuration Toggles Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // ISO 3779 Checksum Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Verify ISO 3779 Checksum",
+                            fontSize = 15.sp,
+                            color = Color.Black
+                        )
+                        Switch(
+                            checked = verifyChecksum,
+                            onCheckedChange = onVerifyChecksumChange,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF34C759),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFB0B0B0),
+                                uncheckedBorderColor = Color.Transparent,
+                                checkedBorderColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = Color(0xFFF0F0F0)
+                    )
+
+                    // Flash Mode Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Flash Mode",
+                            fontSize = 15.sp,
+                            color = Color.Black
+                        )
+                        Switch(
+                            checked = flashEnabled,
+                            onCheckedChange = onFlashEnabledChange,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF34C759),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFB0B0B0),
+                                uncheckedBorderColor = Color.Transparent,
+                                checkedBorderColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
                 onClick = onScanVIN,
                 modifier = Modifier
@@ -160,7 +235,7 @@ fun HomeScreen(
             }
             
             if (scanStatus !is ScanStatus.None) {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(

@@ -1,12 +1,7 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
 .DS_Store
 /build
 /captures
@@ -14,5 +9,11 @@
 .cxx
 local.properties
 
-# Local release script
+# Release scripts
 prepare_release.sh
+publish_aar.sh
+
+# Internal docs (not for public repo)
+README_INTERNAL.md
+readme-internal.pdf
+readme-external.pdf

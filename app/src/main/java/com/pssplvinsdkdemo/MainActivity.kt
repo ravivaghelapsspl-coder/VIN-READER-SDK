@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.psspl.vinsdk.VinResult
 import com.psspl.vinsdk.VINScannerContract
-import com.psspl.vinsdk.VINScannerConfiguration
+import com.psspl.vinsdk.TruvideoSdkVINConfiguration
+import com.psspl.vinsdk.TruvideoSdkVINFlashMode
 
 sealed class ScanStatus {
     object None : ScanStatus()
@@ -33,6 +34,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             VINSDKDemoTheme {
                 var scanStatus by remember { mutableStateOf<ScanStatus>(ScanStatus.None) }
+                var verifyChecksum by remember { mutableStateOf(false) }
+                var flashEnabled by remember { mutableStateOf(false) }
 
                 val scannerScreenLauncher = rememberLauncherForActivityResult(
                     contract = VINScannerContract()
@@ -48,9 +51,18 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                         HomeScreen(
                             onScanVIN = {
-                                scannerScreenLauncher.launch(VINScannerConfiguration())
+                                scannerScreenLauncher.launch(
+                                    TruvideoSdkVINConfiguration(
+                                        iso3779Enabled = verifyChecksum,
+                                        flashMode = if (flashEnabled) TruvideoSdkVINFlashMode.ON else TruvideoSdkVINFlashMode.OFF
+                                    )
+                                )
                             },
-                            scanStatus = scanStatus
+                            scanStatus = scanStatus,
+                            verifyChecksum = verifyChecksum,
+                            onVerifyChecksumChange = { verifyChecksum = it },
+                            flashEnabled = flashEnabled,
+                            onFlashEnabledChange = { flashEnabled = it }
                         )
                     }
                 }

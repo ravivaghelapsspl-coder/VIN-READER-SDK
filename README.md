@@ -1,10 +1,27 @@
-# VIN-READER-SDK
+# TruvideoSdkVIN
 
-An isolated, lightweight Android SDK for optically scanning and validating Vehicle Identification Numbers (VINs) via ML Kit Text Recognition with support for ISO 3779 checksum mathematics.
+An isolated, lightweight iOS SDK for optically scanning and validating Vehicle Identification Numbers (VINs) via Apple Vision Text Recognition, with optional ISO 3779 checksum validation.
 
-## Installation 
+---
+
+## Requirements
+
+| Requirement | Version |
+| :--- | :--- |
+| Android Studio | Hedgehog (2023.1.1) or later |
+| Kotlin | 2.0+ |
+| Java | 11 |
+| Min SDK | 24 (Android 7.0) |
+| Compile SDK | 36 |
+
+---
+
+## Installation
+
+### Gradle (JitPack)
 
 Add the JitPack repository in your root `settings.gradle.kts`:
+
 ```kotlin
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -16,18 +33,21 @@ dependencyResolutionManagement {
 }
 ```
 
-Add the dependency to your module `build.gradle.kts`:
+Add the dependency in your module `build.gradle.kts`:
+
 ```kotlin
 dependencies {
     implementation("com.github.ravivaghelapsspl-coder:VIN-READER-SDK:1.0.9")
 }
 ```
 
-## Camera Permission
+---
 
-The SDK requires camera access to scan VIN codes. You must declare the permission in your app manifest **and** handle the runtime request for Android 6.0+ (API 23+).
+## Quick Start
 
-### 1. Add to `AndroidManifest.xml`
+### Step 1 — Camera Permission
+
+Declare the permission in your `AndroidManifest.xml`:
 
 ```xml
 <uses-feature
@@ -37,102 +57,32 @@ The SDK requires camera access to scan VIN codes. You must declare the permissio
 <uses-permission android:name="android.permission.CAMERA" />
 ```
 
-> [!NOTE]
-> Setting `android:required="false"` ensures your app is still installable on devices without a back camera. The SDK will surface an error callback if no camera is found at runtime.
-
-### 2. Runtime Permission (Recommended)
-
-The SDK handles the runtime permission request internally when the scanner is launched. However, for a better user experience, it is recommended to check and request the permission **before** calling `openScanner()` so you can show a rationale dialog first.
-
-```kotlin
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-
-class YourActivity : ComponentActivity() {
-
-    // Register the permission launcher before onCreate
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            openScanner(scannerScreenLauncher)
-        } else {
-            // Handle the case where the user denied the permission
-            Toast.makeText(this, "Camera permission is required to scan VINs.", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun checkAndOpenScanner() {
-        when {
-            // Permission already granted — launch immediately
-            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED -> {
-                openScanner(scannerScreenLauncher)
-            }
-
-            // Show rationale if the user previously denied
-            shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
-                AlertDialog.Builder(this)
-                    .setTitle("Camera Required")
-                    .setMessage("Camera access is needed to scan the VIN barcode on your vehicle.")
-                    .setPositiveButton("Grant") { _, _ ->
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-            }
-
-            // First-time request
-            else -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-}
-```
-
 > [!IMPORTANT]
-> If the CAMERA permission is denied and the SDK launches anyway, the scanner screen will display a "Camera permission is required" message with a Cancel button. The `onError` callback **is not** invoked on permission denial — the user must manually dismiss using `onCancel`.
+> The SDK handles camera permission requests internally. On first launch it shows a waiting screen, automatically re-asks if soft-denied, and shows an **"Open App Settings"** button if permanently denied — no extra code needed on your side.
 
-## API Documentation
+---
 
+### Step 2 — Configuration
 
-### [#](#vin-scanner-contract)VINScannerContract
-[#](#vin-scanner-contract)
-Represents the standard Android Activity Result Contract used to launch the scanner Activity and return the scanned result safely to your component.
+Use `TruvideoSdkVINConfiguration` to customize the scanner before presenting it.
 
-- `registerForActivityResult(VINScannerContract())`: this function registers the contract in your Activity and returns an ActivityResultLauncher.
-
-```kotlin
-registerForActivityResult(VINScannerContract()) { result: VINScannerCode? ->
-    // implementation
-}
-```
-
-### [#](#vin-scanner-configuration)VINScannerConfiguration
-[#](#vin-scanner-configuration)
-Represents the configuration class parameter used to customize the behavior and UI constraints of the SDK.
-
-- `iso3779Enabled`: Determines if strictly validating mathematical ISO 3779 Checksums is enabled by default. Default: `false`.
-- `flashMode`: Determines the default starting mode of the camera torch capability using `VINScannerFlashMode.ON` or `OFF`. Default: `VINScannerFlashMode.OFF`.
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `iso3779Enabled` | `Boolean` | `false` | Enforce ISO 3779 mathematical checksum before accepting a VIN. The user can toggle this from the scanner UI at runtime. |
+| `flashMode` | `TruvideoSdkVINFlashMode` | `OFF` | Initial torch state — ON or OFF. The user can toggle this from the scanner UI at runtime. |
 
 ```kotlin
-VINScannerConfiguration(
+TruvideoSdkVINConfiguration(
     iso3779Enabled = false,
-    flashMode = VINScannerFlashMode.OFF
+    flashMode = TruvideoSdkVINFlashMode.OFF
 )
 ```
 
-### [#](#vin-scanner-code)VINScannerCode
-[#](#vin-scanner-code)
-Represents the result dataset emitted by the ML Kit text analyzer containing exactly 17 corrected characters.
+---
 
-- `data`: retrieving the parsed 17-digit string representing the VIN.
-- `confidence`: retrieving the Float tracking the optical accuracy/checksum validity.
+### Step 3 — Integration
 
-## Usage Example
-
-Implementation of the complete pipeline within a ComponentActivity. 
+#### Activity / Fragment
 
 ```kotlin
 import android.os.Bundle
@@ -140,31 +90,130 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import com.psspl.vinsdk.*
 
-class YourActivity: ComponentActivity() {
-    
-    private var scannerScreenLauncher: ActivityResultLauncher<VINScannerConfiguration>? = null
+class YourActivity : ComponentActivity() {
+
+    private var scannerLauncher: ActivityResultLauncher<TruvideoSdkVINConfiguration>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        scannerScreenLauncher = registerForActivityResult(VINScannerContract()) { result: VINScannerCode? ->
+
+        scannerLauncher = registerForActivityResult(VINScannerContract()) { result: TruvideoSdkVINResponse? ->
             if (result != null) {
-                println("Scanned VIN: ${result.data}")
+                println("VIN: ${result.data}")
+                println("Confidence: ${result.confidence}")
             } else {
-                println("Scan was dismissed")
+                println("Scan cancelled")
             }
         }
-        
-        // When a button is clicked... 
-        openScanner(scannerScreenLauncher)        
+
+        // Trigger on a button click or any event
+        openScanner()
     }
 
-    private fun openScanner(cameraScreen: ActivityResultLauncher<VINScannerConfiguration>?) {
-        val scannerConfiguration = VINScannerConfiguration(
-            iso3779Enabled = false,
-            flashMode = VINScannerFlashMode.OFF
+    private fun openScanner() {
+        scannerLauncher?.launch(
+            TruvideoSdkVINConfiguration(
+                iso3779Enabled = false,
+                flashMode = TruvideoSdkVINFlashMode.OFF
+            )
         )
-        cameraScreen?.launch(scannerConfiguration)
     }
 }
 ```
+
+#### Jetpack Compose
+
+```kotlin
+@Composable
+fun ScanButton() {
+    val launcher = rememberLauncherForActivityResult(VINScannerContract()) { result ->
+        result?.let {
+            println("VIN: ${it.data}")
+            println("Confidence: ${it.confidence}")
+        }
+    }
+
+    Button(onClick = {
+        launcher.launch(TruvideoSdkVINConfiguration())
+    }) {
+        Text("Scan VIN")
+    }
+}
+```
+
+---
+
+## Entities
+
+### `TruvideoSdkVINConfiguration`
+
+Configuration object passed at launch to initialize the scanner's behaviour.
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `iso3779Enabled` | `Boolean` | `false` | Enforce ISO 3779 checksum validation |
+| `flashMode` | `TruvideoSdkVINFlashMode` | `OFF` | Initial torch state on launch |
+
+---
+
+### `TruvideoSdkVINFlashMode`
+
+Controls the initial state of the device torch.
+
+| Case | Description |
+| :--- | :--- |
+| `ON` | Torch turns on automatically when the scanner opens |
+| `OFF` | Torch remains off (default) |
+
+```kotlin
+enum class TruvideoSdkVINFlashMode { ON, OFF }
+```
+
+---
+
+### `TruvideoSdkVINResponse`
+
+The result object returned via the Activity Result API on a successful scan.
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `data` | `String` | The validated 17-character VIN string |
+| `confidence` | `Float` | Scan confidence score (0.0 – 1.0) |
+| `timestamp` | `Date` | The date and time when the VIN was captured |
+
+---
+
+### `VINScannerContract`
+
+Standard Android Activity Result Contract used to launch the scanner and parse the result.
+
+```kotlin
+registerForActivityResult(VINScannerContract()) { result: TruvideoSdkVINResponse? ->
+    // result is null if the user cancelled
+}
+```
+
+---
+
+### Confidence Score Reference
+
+| Score | Meaning |
+| :--- | :--- |
+| `0.99` | Valid structure **and** ISO 3779 checksum passed |
+| `0.90` | Two-line merged VIN with checksum passed |
+| `0.85` | Valid structure only (checksum not enforced) |
+| `0.75` | Two-line merged VIN, structure only |
+
+---
+
+## Privacy
+
+TruvideoSdkVIN strictly adheres to privacy guidelines:
+
+- **Zero tracking** — Does not collect, track, store, or transmit any user data or PII
+- **Minimal permissions** — Only requires Camera access for scanning
+- **Local processing** — All VIN recognition is performed entirely on-device; nothing is persisted or uploaded
+
+---
+
+© TruVideo. All rights reserved.

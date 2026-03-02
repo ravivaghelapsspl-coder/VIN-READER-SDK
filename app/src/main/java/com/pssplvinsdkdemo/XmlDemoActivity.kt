@@ -5,12 +5,12 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
-import com.psspl.vinsdk.VINScannerCode
-import com.psspl.vinsdk.VINScannerConfiguration
+import com.psspl.vinsdk.TruvideoSdkVINResponse
+import com.psspl.vinsdk.TruvideoSdkVINConfiguration
 import com.psspl.vinsdk.VINScannerContract
 
 class XmlDemoActivity : ComponentActivity() {
-    private var scannerScreenLauncher: ActivityResultLauncher<VINScannerConfiguration>? = null
+    private var scannerScreenLauncher: ActivityResultLauncher<TruvideoSdkVINConfiguration>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,7 +19,7 @@ class XmlDemoActivity : ComponentActivity() {
         val btnScan = findViewById<Button>(R.id.btnScan)
         val tvVinResult = findViewById<TextView>(R.id.tvVinResult)
 
-        scannerScreenLauncher = registerForActivityResult(VINScannerContract()) { result: VINScannerCode? ->
+        scannerScreenLauncher = registerForActivityResult(VINScannerContract()) { result: TruvideoSdkVINResponse? ->
             if (result != null) {
                 tvVinResult.text = "Scanned VIN: ${result.data}\nConfidence: ${result.confidence}"
             } else {
@@ -32,8 +32,8 @@ class XmlDemoActivity : ComponentActivity() {
         }
     }
 
-    private fun openScanner(cameraScreen: ActivityResultLauncher<VINScannerConfiguration>?) {
-        val scannerConfiguration = VINScannerConfiguration()
+    private fun openScanner(cameraScreen: ActivityResultLauncher<TruvideoSdkVINConfiguration>?) {
+        val scannerConfiguration = TruvideoSdkVINConfiguration()
         cameraScreen?.launch(scannerConfiguration)
     }
 }
